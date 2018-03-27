@@ -1,0 +1,19 @@
+---
+title: "AI Sentiment Analysis"
+author: "Rosalie R Day"
+date: "March 26, 2018"
+output: html_document
+---
+Does the public associate artificial intelligence with negative or positive outcomes?
+
+In the current narrative, the concerns around artificial intelligence (AI) are captured in: the lack of transparency denoted by references to malevolent hidden algorithms; the much heralded current and potential job losses; poorly explained or understood advances in science; and the public argument between Mark Zuckerberg and Elon Musk about whether AI should be vaunted or feared.
+
+Potential clients for this analysis are interested in establishing a baseline for sentiments surrounding use of AI and fostering trust among their respective customer bases. After Americans are finally awakening to the privacy incursions made by businesses whose revenue models are based on customer surveillance, the trust in technology companies has rapidly declined. This analysis will provide a baseline assessment upon which to design branding, postioning and remedial measures.
+
+Twitter data will be used from the days immediately following two separate events: July 25, 2017 occurence of the Twitter exchange between Zuckerberg and Musk; and the New Work Summit which began on February 12, 2018. The data will be acquired by API.
+
+The proposed approach is to mine with R the text of Twitter message content for the keywords "artificial intelligence" and "AI." Then sentiment analysis with R will be conducted on the messages for negative and positive sentiments, especially trust. Results will include frequencies of sentiments, and additional analysis for negative sentiments and lack of trust, including other variables, such as followers, likes and retweets, with various visualization and predictive tools.
+
+The project deliverables will include a data description, code, plots, along with a brief paper capturing results, conclusions and topics for further study.
+
+
