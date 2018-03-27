@@ -16,4 +16,4 @@ The proposed approach is to mine with R the text of Twitter message content for 
 
 The project deliverables will include a data description, code, plots, along with a brief paper capturing results, conclusions and topics for further study.
 
-
+Added this to github repository.
