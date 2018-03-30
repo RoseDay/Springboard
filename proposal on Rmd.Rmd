@@ -12,7 +12,7 @@ Potential clients for this analysis are interested in establishing a baseline fo
 
 Twitter data will be used from the days immediately following two separate events: July 25, 2017 occurence of the Twitter exchange between Zuckerberg and Musk; and the New Work Summit which began on February 12, 2018. The data will be acquired by API.
 
-The proposed approach is to mine with R the text of Twitter message content for the keywords "artificial intelligence" and "AI." Then sentiment analysis with R will be conducted on the messages for negative and positive sentiments, especially trust. Results will include frequencies of sentiments, and additional analysis for negative sentiments and lack of trust, including other variables, such as followers, likes and retweets, with various visualization and predictive tools.
+The proposed approach is to mine with R the text of Twitter message content for the keywords "artificial intelligence" and "AI." Then sentiment analysis with R will be conducted on the messages for negative and positive sentiments, especially trust. Results will include frequencies of sentiments, and additional analysis for negative sentiments and lack of trust, including other variables, such as followers, favorites and retweets, with various visualization and predictive tools.
 
 The project deliverables will include a data description, code, plots, along with a brief paper capturing results, conclusions and topics for further study.
 
