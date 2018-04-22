@@ -1,6 +1,6 @@
 library("tidyverse")
 
-refine_original<- read.csv("refine_savedasCSV.csv",stringsAsFactors = FALSE)
+refine_original<- read.csv("dataexer1submission/refine_savedasCSV.csv",stringsAsFactors = FALSE)
 refine_draft <- refine_original
 
 #correct company names
@@ -41,3 +41,4 @@ refine_draft <- cbind(refine_draft, dummy_philips, dummy_akzo, dummy_van_houten,
 refine_draft
 
 refine_clean <- refine_draft
+write.csv(refine_clean, "refine_clean.csv")
