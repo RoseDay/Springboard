@@ -41,4 +41,4 @@ refine_draft <- cbind(refine_draft, dummy_philips, dummy_akzo, dummy_van_houten,
 refine_draft
 
 refine_clean <- refine_draft
-write.csv(refine_clean, "refine_clean.csv")
+write.csv(refine_clean, "dataexer1submission/refine_clean.csv")

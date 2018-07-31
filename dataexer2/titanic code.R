@@ -18,6 +18,6 @@ titanic_draft$has_cabin_number <- ifelse(is.na(titanic_draft$cabin), 0, 1)
 
 #5 store in titanic_clean.csv and submit 
 titanic_clean <- titanic_draft
-write.csv(refine_clean, "dataexer2submission/titanic_clean.csv")
+write.csv(titanic_clean, "dataexer2submission/titanic_clean.csv")
 
 

@@ -235,3 +235,4 @@ mosaicGG(mtcars, "cyl", "am")
 library(carData)
 mosaicGG(Vocab, "education", "vocabulary")
 
+#submit C:/Program Files/Git/bin/git.exe commit -F C:/Users/Rosalie/AppData/Local/Temp/RtmpgLad6v/git-commit-message-2b24317c7c51.txt
