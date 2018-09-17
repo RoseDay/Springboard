@@ -1,0 +1,270 @@
+---
+title: "AI Twt Data story submittal"
+author: "Rosalie R Day"
+date: "September 13, 2018"
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Milestone Report - AI Tweets Data Story
+
+## Introduction
+
+This is an Rmarkdown document for the data exploration of tweets related to artificial intelligence. In the current narrative, the concerns around artificial intelligence (AI) are captured in: the lack of transparency denoted by references to malevolent hidden algorithms; the much heralded current and potential job losses; poorly explained or understood advances in science. 
+
+After Americans are finally awakening to the privacy incursions made by businesses whose revenue models are based on customer data and surveillance, the trust in technology companies has rapidly declined. This analysis will provide a baseline assessment upon which to design branding, postioning and remedial measures, perhaps obtaining insights that can be used to build trust.
+
+My proposed approach is to use R to search and select Twitter message content for the keywords "artificial intelligence" and "AI." Then conduct sentiment analysis on the messages (text) for negative and positive sentiments, especially trust. Results will include frequencies of sentiments, and additional analysis for negative sentiments and lack of trust. 
+
+### Data Extraction and Changes
+
+The Twitter data will be used from seven consecutive days in June 2018. The data was acquired by API and reflects the revised policy on downloading Twitter data which restricts the period for which it may be extracted for free to seven days preceding extraction. This differs from my original proposal for selecting Twitter data from the days immediately following two separate events: July 25, 2017 occurence of the Twitter exchange between Zuckerberg and Musk; and the New Work Summit which began on February 12, 2018.
+
+As a result, the Tweeting public's sentiment about the argument between Mark Zuckerberg and Elon Musk about whether AI should be vaunted or feared cannot be assessed. Because there were no AI newsworthy events in the 7-day period, my assumption is that only Tweeters that have a special interest in AI and marketers of products in the AI space are included. My data set does not allow for informative time series analysis and topic modeling. Hence, my initial proposal for establishing a baseline for public sentiments surrounding use of AI cannot be accomplished. However, using my study plan for multiple 7-day data extractions or 7-day data extractions following AI news events could achieve my original proposed goal.
+
+## Twitter Data about AI from 7 days, June 2018
+
+This milestone report reflects the data extracted, my selection of which variables to use, my cleaning of the data selected, and my plan on how to use the data for sentiment analysis.
+
+```{r}
+library(tidyverse)
+library(rtweet)
+library(qdapRegex)
+library(tidytext)
+```
+Collection of free Twitter data for 7-day period using the `rtweet` package.
+
+AItwtdata <- search_tweets(q="artificial intelligence OR AI OR Artificial Intelligence", n = 12000, retryonratelimit = TRUE, type = "mixed")
+
+Saving data for use later.
+
+```{r}
+#saveRDS(AItwtdata, "AItwtdata.Rds")
+AItwtdata <-readRDS("AItwtdata.RDS")
+```
+
+## Data preparation and exploration
+
+Filtering for tweets only in English.
+
+```{r}
+AItwtdata <-AItwtdata %>% filter(lang == 'en')
+```
+
+The data is comprised of 11,276 English tweets and 42 variables. The tweet content text variable is the area of focus for sentiment analysis. This is a sample of text.
+
+```{r}
+head(AItwtdata$text, 10)
+```
+
+Removing URLs from the text and add the selection criteria words.
+
+```{r}
+AItwtdata$text <- rm_twitter_url(AItwtdata$text)
+
+custom1_stop_words <- bind_rows(data_frame(word = c("artificialintelligence", "ai"), 
+lexicon = c("custom")), stop_words)
+```
+
+
+###Initial tokenization and word count
+
+```{r}
+tidyAItwt0 <- AItwtdata %>%
+select(text) %>%
+mutate(line = row_number()) %>%
+unnest_tokens(word, text) %>%
+anti_join(custom1_stop_words)
+```
+
+Looking at word counts:
+
+```{r}
+tidyAItwt0 %>% count(word, sort = TRUE)
+```
+
+Visualizing all words except for criteria selection words and the 6602 "rt," an artifact of Twitter, indicating retweet.
+
+```{r}
+ tidyAItwt0 %>% 
+  count(word, sort=TRUE) %>%
+  filter(substr(word, 1, 1) != '#', # omit hashtags
+         substr(word, 1, 1) != '@', # omit Twitter handles
+         n > 400, n < 2500) %>% # only most common words
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n, fill = word)) +
+  geom_bar(stat = 'identity') +
+  xlab(NULL) +
+  ylab("Word Count") +
+  ggtitle('Most common words in tweets') +
+  theme(legend.position="none") +
+  coord_flip()
+```
+
+The word count reveals some non-English characters (converted they look like this <U+___>) and some word pairs that are technical jargon, which would not add anything to the sentiment analysis. However, the words of the jargon word-pairs occurring singly may contribute to the sentiment analysis. For example, "learning" may contribute positively, but "deep learning" should not be included. In order to render the most sentiment from these small messages, further cleaning of the data needs to occur preserving the unpaired words.
+
+Removing the remaining non-English characters using `qdapRegex`.
+
+```{r}
+AItwtdata$text <- gsub("[^0-9A-Za-z///']"," ", AItwtdata$text)
+```
+
+Preserving single words by joining word pairs
+
+```{r}
+AItwtdata$text <- tolower(AItwtdata$text)
+AItwtdata$text <- gsub(pattern = "artificial intelligence", "artificialintelligence", AItwtdata$text)
+AItwtdata$text <- gsub(pattern = "deep learning", "deeplearning", AItwtdata$text)
+AItwtdata$text <- gsub(pattern = "machine learning", "machinelearning", AItwtdata$text)
+AItwtdata$text <- gsub(pattern = "big data", "bigdata", AItwtdata$text)
+AItwtdata$text <- gsub(pattern = "data science", "datascience", AItwtdata$text)
+```
+
+Adding words to second custom stop word list
+
+```{r}
+custom2_stop_words <- bind_rows(data_frame(word = c("artificialintelligence", "ai", "rt", "gt", "amp", "machinelearning","ml", "deeplearning","bigdata", "datascience", "3", "000", "1", "5", "10", "12", "2018", "2", "tech", "dl","iot", "software", "cybersecurity", "hr"), lexicon = c("custom")), stop_words)
+```
+
+Using added custom stop words and checking a word cloud for other words which do not belong in sentiment analysis.
+
+```{r}
+tidyAItwt0 <- AItwtdata %>%
+  select(text) %>%
+  mutate(line = row_number()) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(custom2_stop_words)
+```
+
+```{r}
+tidyAItwt0 %>% count(word, sort = TRUE)
+```
+
+Making a word cloud.
+
+```{r warning=FALSE}
+library(wordcloud)
+tidyAItwt0 %>%
+   anti_join(custom2_stop_words) %>%
+   count(word) %>%
+   with(wordcloud(word, n, max.words = 100))
+```
+Adding proper nouns to a third custom stop word list and tokenizing.
+
+```{r}
+custom3_stop_words <- bind_rows(data_frame(word = c("artificialintelligence", "ai", "rt", "gt", "amp", "machinelearning","deeplearning","bigdata", "datascience", "apple", "microsoft", "ibm", "amazon", "ipfconline1", "quindazzi", "mckinsey", "mit", "iainljbrown", "nitiaayog", "vanloon", "google","ronald", "apple's", "forbes", "blockchain", "mozilla", "deeplearn007", "thomas1774paine", "3", "000", "1", "5", "10", "12", "2018", "2", "tech", "ml", "dl", "pentagon", "digitaltransformation", "mgi", "weftrends", "india", "europe","iot", "software", "cybersecurity", "hr", "fintech", "deepaerodrones", "mikequindazzi", "thenextweb", "valaafshar"),
+lexicon = c("custom")), stop_words)
+```
+
+```{r}
+tidyAItwts <- AItwtdata %>%
+  select(text) %>%
+  mutate(line = row_number()) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(custom3_stop_words)
+```
+
+The final word cloud displays the words for conducting sentiment analysis. There will be some words that will go unmatched in the three reference lexicons' word lists and other neutral words.
+
+```{r warning=FALSE}
+tidyAItwts %>%
+   anti_join(custom3_stop_words) %>%
+   count(word) %>%
+   with(wordcloud(word, n, max.words = 100))
+```
+
+#Sentiment Analysis
+
+`Tidyverse`contains reference lexicons for conducting sentiment analysis. The word-wise sentiment analyses to be performed on the AI tweet data are:
+
+* on the corpus, composed of sentiment words in all tweet texts (tweets) for the 7 days preceding the data extraction (NOTE: this has changed since my original proposal because the Twitter data policy has changed, not allowing the selection of data specific extractions); 
+* characterizing users' tweets as postive or negative with data grouped by user; and
+* using bigrams for context, especially for negating sentiments.
+
+There are three lexicons in the `tidyverse` package, two binary lexicons - `Bing` and `NRC`, and one that is an ordinal range from -5 to 5, `AFINN`. I will utilize the specific lexicon which I think works best for the aspect of analysis while making use of all three. I will provide visualization of my results with a plot which illustrates the data's meaning. 
+
+## Sentiments of single words in corpus of tweets
+
+###Analysis with the Bing lexicon
+
+The `Bing` lexicon reference list provides for *positive* and *negative* sentiments. I will explore the net sentiment of corpus by word sentiment with `bing,` capturing the frequencies that the words occur and identifying the words themselves.
+
+```{r}
+bing_nets <- tidyAItwts %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(line, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+```
+
+### Using the `NRC` lexicon
+
+The `NRC` lexicon has ten sentiments, the *positive* and the *negative*, like are included in `Bing`, and more specific descriptors: *anger*; *anticipation*; *disgust*; *fear*; *joy*; *sadness*; *surprise*; and *trust*.
+
+I will explore the *negative* and *positive* word counts in the total pool of tweets using `NRC` just as I did with `Bing.` 
+```{r}
+nrc_counts <- tidyAItwts %>%
+  inner_join(get_sentiments("nrc")) %>%
+  count(word, sentiment)
+```
+
+Then, I will explore tweet words associated with the specific sentiments included in the `NRC` lexicon. This will be important because my initial reason for the study is determining if artificial intelligence is trusted. Given my truncated data sample (relative to what I had intended with substantially access to more tweets), this turns out to be whether Tweeters trust AI and not an indicator of the general public's trust.
+
+Then, I will compare the frequencies of the specific sentiments to identify and explore the top two sentiments.
+
+```{r}
+nrc_specific_tops <- nrc_counts %>%
+  group_by(sentiment) %>% 
+  filter(sentiment %in% c("anger", "anticipation", "disgust", "fear", "joy", "sadness", "surprise", "trust")) %>%
+  top_n(10) %>%
+  ungroup() %>%
+  mutate(word = reorder(word, n))
+```
+
+## Characterizing tweeters' sentiments by words
+
+I will explore the sentament word usage by author (associated with the identifier `user_id`). The total pool of words included in tweet texts may provide a more meaningful sentiment analysis to single word analysis in the corpus. Although, the approach provided by `Bing` and `NRC` would allow net sentiments as the aggregation of words by user, the `AFINN` lexicon provides more information about the individual words used.
+
+###Using the `AFINN` lexicon
+
+`AFINN` scores words from a negative sentiment to positive sentiment in a range of scoring -5 to 5. Through aggregating the word score, the net sentiment of the user (i.e., the total score by user) can be positive or negative. This measure of sentiment is subject to how many words are common to `AFINN` and the tweets, the relative degree of the word score, and the length and quantity of the tweets of a particular user.
+
+Assigning words to a particular user.
+
+```{r}
+tidyIDtwts <- AItwtdata %>%
+select(text, user_id) %>%
+unnest_tokens(word, text) %>%
+anti_join(custom3_stop_words)
+
+head(tidyIDtwts)
+```
+
+## Bigrams
+
+I will word pairs occurring most frequently in the corpus.
+
+```{r}
+twtAIbigrams<- AItwtdata %>%
+select(text) %>%
+mutate(line = row_number()) %>%
+unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+twtAIbigrams %>% 
+  count(bigram, sort = TRUE)
+```
+
+Then, I will separate the bigrams to allow filtering of stop words from word1 and/or word2, and provide the opportunity to filter for specific words. Using the prior custom stop word list developed for single words provides more meaningful bigrams.
+
+```{r}
+AIbigram_sep <- twtAIbigrams %>% 
+  separate(bigram, c("word1", "word2"), sep = " ")
+```
+
+Also, I will conduct contextual analysis where there are Word pairings in which the first word is negative word, thereby reversing the meaning of the sentiment identified. 
+
